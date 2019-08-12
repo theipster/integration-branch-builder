@@ -1,0 +1,23 @@
+{
+    "name": "theipster/integration-branch-builder",
+    "description": "Tool for building disposable integration branches",
+    "type": "project",
+    "require": {
+        "symfony/console": "^4.3"
+    },
+    "require-dev": {
+        "codeception/codeception": "^3.0"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alan Ip",
+            "email": "theipster@users.noreply.github.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "TheIpster\\IntegrationBranchBuilder\\": "src/"
+        }
+    }
+}

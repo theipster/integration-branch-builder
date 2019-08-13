@@ -3,7 +3,12 @@
     "description": "Tool for building disposable integration branches",
     "type": "project",
     "require": {
-        "symfony/console": "^4.3"
+        "symfony/console": "^4.3",
+        "symfony/http-client": "^4.3",
+        "symfony/dependency-injection": "^4.3",
+        "symfony/config": "^4.3",
+        "psr/http-client": "^1.0",
+        "nyholm/psr7": "^1.1"
     },
     "require-dev": {
         "codeception/codeception": "^3.0"

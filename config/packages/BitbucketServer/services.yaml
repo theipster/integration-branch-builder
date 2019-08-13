@@ -1,0 +1,11 @@
+services:
+  _defaults:
+    autowire: true
+
+  TheIpster\IntegrationBranchBuilder\BitbucketServer\Finder:
+    arguments:
+      $apiDomain: '%bitbucketServer.apiDomain%'
+      $authHeaderValue: '%bitbucketServer.authHeaderValue%'
+  TheIpster\IntegrationBranchBuilder\BitbucketServer\Command:
+    tags:
+      - console.command

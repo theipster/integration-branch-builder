@@ -72,6 +72,9 @@ class Command extends SymfonyCommand
             $targetBranch
         );
 
-        //
+        // Output branch refs
+        foreach ($branches as $branch) {
+            $output->writeln($branch->getName());
+        }
     }
 }

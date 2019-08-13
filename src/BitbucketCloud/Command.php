@@ -54,6 +54,9 @@ class Command extends SymfonyCommand
         $this->logger->info(sprintf('Querying Bitbucket for pull requests targeting %s.', $target));
         $branches = $this->finder->getBranchesForPullRequestTarget($target);
 
-        //
+        // Output branch refs
+        foreach ($branches as $branch) {
+            $output->writeln($branch->getName());
+        }
     }
 }

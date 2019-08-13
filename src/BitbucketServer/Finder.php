@@ -54,8 +54,8 @@ class Finder
     }
 
     /**
-     * @param string $projectKey Bitbucket project key (e.g. "WS")
-     * @param string $repositorySlug Bitbucket repository slug (e.g. "servicelayer")
+     * @param string $projectKey Bitbucket project key
+     * @param string $repositorySlug Bitbucket repository slug
      * @param string $targetBranch Pull request target branch name (e.g. "feature/ABC-123-target")
      *
      * @return RequestInterface
@@ -81,8 +81,8 @@ class Finder
     }
 
     /**
-     * @param string $projectKey Bitbucket project key (e.g. "WS")
-     * @param string $repositorySlug Bitbucket repository slug (e.g. "servicelayer")
+     * @param string $projectKey Bitbucket project key
+     * @param string $repositorySlug Bitbucket repository slug
      * @param string $targetBranch Pull request target branch name (e.g. "feature/ABC-123-target")
      *
      * @return Branch[]

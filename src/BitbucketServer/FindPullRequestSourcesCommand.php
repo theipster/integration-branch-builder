@@ -4,34 +4,26 @@ declare(strict_types=1);
 
 namespace TheIpster\IntegrationBranchBuilder\BitbucketServer;
 
-use Psr\Log\LoggerInterface;
-use Symfony\Component\Console\Command\Command as SymfonyCommand;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Command extends SymfonyCommand
+class FindPullRequestSourcesCommand extends Command
 {
-    protected static $defaultName = 'bitbucketserver';
+    protected static $defaultName = 'bitbucket-server:find-pull-request-sources';
 
     /**
-     * @var Finder
+     * @var FindPullRequestSourcesService
      */
-    private $finder;
+    private $service;
 
     /**
-     * @var LoggerInterface
+     * @param FindPullRequestSourcesService $service
      */
-    private $logger;
-
-    /**
-     * @param LoggerInterface $logger
-     * @param Finder $finder
-     */
-    public function __construct(LoggerInterface $logger, Finder $finder)
+    public function __construct(FindPullRequestSourcesService $service)
     {
-        $this->logger = $logger;
-        $this->finder = $finder;
+        $this->service = $service;
         parent::__construct();
     }
 
@@ -40,7 +32,7 @@ class Command extends SymfonyCommand
      */
     protected function configure()
     {
-        $this->setDescription('Builds a new integration branch.')
+        $this->setDescription('Given a pull request target branch, find all source branches.')
             ->addArgument('projectKey', InputArgument::REQUIRED, 'Which Bitbucket project?')
             ->addArgument('repositorySlug', InputArgument::REQUIRED, 'Which Bitbucket repository?')
             ->addArgument('targetBranch', InputArgument::REQUIRED, 'Which branch are the pull requests targeting?');
@@ -56,17 +48,8 @@ class Command extends SymfonyCommand
         $repositorySlug = $input->getArgument('repositorySlug');
         $targetBranch = $input->getArgument('targetBranch');
 
-        // Log info message
-        $infoMsg = sprintf(
-            'Querying Bitbucket (%s/%s) for pull requests targeting %s.',
-            $projectKey,
-            $repositorySlug,
-            $targetBranch
-        );
-        $this->logger->info($infoMsg);
-
         // Fetch pull requests
-        $branches = $this->finder->getBranchesForPullRequestTarget(
+        $branches = $this->service->getBranchesForPullRequestTarget(
             $projectKey,
             $repositorySlug,
             $targetBranch

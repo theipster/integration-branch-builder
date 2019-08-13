@@ -1,0 +1,15 @@
+imports:
+  - { resource: 'packages/*/*.yaml' }
+
+services:
+  _defaults:
+    public: true
+
+  Psr\Http\Client\ClientInterface:
+    class: Symfony\Component\HttpClient\Psr18Client
+  Psr\Http\Message\RequestFactoryInterface:
+    class: Nyholm\Psr7\Factory\Psr17Factory
+  Psr\Log\LoggerInterface:
+    class: Psr\Log\NullLogger
+
+  Symfony\Component\Console\Application: ~

@@ -1,0 +1,12 @@
+services:
+  _defaults:
+    autowire: true
+
+  TheIpster\IntegrationBranchBuilder\BitbucketCloud\Finder:
+    arguments:
+      $authHeaderValue: '%bitbucketCloud.authHeaderValue%'
+      $organizationName: '%bitbucketCloud.organizationName%'
+      $projectName: '%bitbucketCloud.projectName%'
+  TheIpster\IntegrationBranchBuilder\BitbucketCloud\Command:
+    tags:
+      - console.command

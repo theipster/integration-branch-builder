@@ -1,0 +1,21 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// Autoload stuff
+require __DIR__ . '/../vendor/autoload.php';
+
+// Create DI container
+/* @var Psr\Container\ContainerInterface $container */
+$container = require __DIR__ . '/container.php';
+
+// Load application
+$application = $container->get(Symfony\Component\Console\Application::class);
+
+// Load commands
+$commandLoader = $container->get('console.command_loader');
+$application->setCommandLoader($commandLoader);
+
+// Run application
+exit($application->run());

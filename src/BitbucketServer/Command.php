@@ -41,8 +41,8 @@ class Command extends SymfonyCommand
     protected function configure()
     {
         $this->setDescription('Builds a new integration branch.')
-            ->addArgument('projectKey', InputArgument::REQUIRED, 'Which Bitbucket project (e.g. "WS")?')
-            ->addArgument('repositorySlug', InputArgument::REQUIRED, 'Which Bitbucket repository (e.g. "servicelayer")?')
+            ->addArgument('projectKey', InputArgument::REQUIRED, 'Which Bitbucket project?')
+            ->addArgument('repositorySlug', InputArgument::REQUIRED, 'Which Bitbucket repository?')
             ->addArgument('targetBranch', InputArgument::REQUIRED, 'Which branch are the pull requests targeting?');
     }
 

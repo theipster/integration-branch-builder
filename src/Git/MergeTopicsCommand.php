@@ -21,8 +21,7 @@ class MergeTopicsCommand extends Command
      */
     protected function configure()
     {
-        $this->setDescription('Merge multiple topic branches onto an existing branch.')
-            ->addArgument('target', InputArgument::REQUIRED, 'Existing branch as the merge target (e.g. feature/ABC-123-integration)')
+        $this->setDescription('Merge multiple topic branches onto the current branch.')
             ->addArgument('topic', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'Topic branches to merge (e.g. feature/ABC-123-task-1)');
     }
 
@@ -37,39 +36,29 @@ class MergeTopicsCommand extends Command
         }
 
         // Fetch branches
-        $targetBranch = $input->getArgument('target');
         $topicBranches = $input->getArgument('topic');
-
-        // Switch to the target branch
-        $this->runShellCommand(
-            'git checkout %s',
-            [$targetBranch],
-            sprintf('Could not checkout target branch "%s".', $targetBranch)
-        );
-        $output->writeln(sprintf('Checked out target branch "%s".', $targetBranch));
 
         // Merge each topic branch
         foreach ($topicBranches as $topicBranch) {
-            $this->mergeTopicBranch($targetBranch, $topicBranch, $output);
+            $this->mergeTopicBranch($topicBranch, $output);
         }
     }
 
     /**
      * @throws Exception
      *
-     * @param string $targetBranch
      * @param string $topicBranch
      * @param OutputInterface $output
      *
      * @return void
      */
-    private function mergeTopicBranch(string $targetBranch, string $topicBranch, OutputInterface $output): void
+    private function mergeTopicBranch(string $topicBranch, OutputInterface $output): void
     {
         // Run the merge
         $this->runShellCommand(
             'git -c merge.conflictStyle=diff3 merge -s recursive -X patience --rerere-autoupdate --no-ff %s',
             [$topicBranch],
-            sprintf('Could not merge topic "%s" into target "%s".', $topicBranch, $targetBranch)
+            sprintf('Could not merge topic "%s".', $topicBranch)
         );
 
         // See if any leftover changes

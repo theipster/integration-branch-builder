@@ -21,9 +21,9 @@ class WarmRerereCacheCommand extends Command
      */
     protected function configure()
     {
-        $this->setDescription('Warm the git rerere cache by replaying merge conflict resolutions.')
-            ->addArgument('baselineBranch', InputArgument::REQUIRED, 'Branch to begin replaying resolutions from (e.g. develop)')
-            ->addArgument('resolvedBranch', InputArgument::REQUIRED, 'Branch to stop replaying resolutions up to (e.g. feature/ABC-123)')
+        $this->setDescription('Warm the git rerere cache by replaying merge conflict resolutions between two existing branches.')
+            ->addArgument('from', InputArgument::REQUIRED, 'Branch to begin replaying resolutions from (e.g. feature/ABC-123-target)')
+            ->addArgument('to', InputArgument::REQUIRED, 'Branch to stop replaying resolutions up to (e.g. feature/ABC-123-integration)')
             ->addOption('clear-cache', null, InputOption::VALUE_NONE, 'Clear existing git rerere cache');
     }
 
@@ -46,20 +46,20 @@ class WarmRerereCacheCommand extends Command
         $this->runShellCommand('mkdir -p .git/rr-cache', [], 'Could not enable git rerere.');
 
         // Fetch branches
-        $baselineBranch = $input->getArgument('baselineBranch');
-        $resolvedBranch = $input->getArgument('resolvedBranch');
+        $fromBranch = $input->getArgument('from');
+        $toBranch = $input->getArgument('to');
 
         // Get revision between them
         $revList = $this->runShellCommand(
             'git rev-list --parents %s..%s 2>/dev/null',
             [
-                $baselineBranch,
-                $resolvedBranch,
+                $fromBranch,
+                $toBranch,
             ],
             sprintf(
                 'Could not get rev-list for %s..%s.',
-                $baselineBranch,
-                $resolvedBranch
+                $fromBranch,
+                $toBranch
             )
         );
         if ($revList === null) {

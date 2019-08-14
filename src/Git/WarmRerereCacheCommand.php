@@ -40,10 +40,12 @@ class WarmRerereCacheCommand extends Command
         // Clear existing Git rerere cache?
         if ($input->getOption('clear-cache')) {
             $this->runShellCommand('rm -rf .git/rr-cache', [], 'Could not clear git rerere cache.');
+            $output->writeln('Cleared git rerere cache.');
         }
 
         // Enable Git rerere.
         $this->runShellCommand('mkdir -p .git/rr-cache', [], 'Could not enable git rerere.');
+        $output->writeln('Initialized git rerere cache.');
 
         // Fetch branches
         $fromBranch = $input->getArgument('from');
@@ -62,9 +64,10 @@ class WarmRerereCacheCommand extends Command
                 $toBranch
             )
         );
-        if ($revList === null) {
+        $output->writeln(sprintf('Found %u commits.', count($revList)));
 
-            // No merges, nothing to do.
+        // No merges? Nothing to do.
+        if ($revList === null) {
             return 0;
         }
 
@@ -76,32 +79,15 @@ class WarmRerereCacheCommand extends Command
             // Only process merges
             if (count($hashes) > 2) {
                 $foundMerge = true;
-
-                // Checkout the from commit.
-                $this->runShellCommand(
-                    'git checkout --quiet %s^0',
-                    [
+                $this->trainRerere($hashes[0], $hashes[1], $hashes[2]);
+                $output->writeln(
+                    sprintf(
+                        'Trained rerere on %s..%s using %s.',
                         $hashes[1],
-                    ],
-                    'Could not checkout merge origin.'
-                );
-
-                // (Re)merge the next commit.
-                $mergeResult = $this->runShellCommand(
-                    'git -c merge.conflictStyle=diff3 merge -s recursive -X patience %s',
-                    [
                         $hashes[2],
-                    ],
-                    'Could not merge next commit.'
+                        $hashes[0]
+                    )
                 );
-                if ($mergeResult === null) {
-
-                    // Train rerere.
-                    $this->runShellCommand('git rerere', [], 'Unable to store current rerere state');
-                    $this->runShellCommand('git checkout --quiet %s -- .', [$hashes[0]], 'Unable to check out merge resolution');
-                    $this->runShellCommand('git rerere', [], 'Unable to store rerere resolution');
-                    $this->runShellCommand('git reset --quiet --hard', [], 'Unable to reset branch state');
-                }
             } else {
 
                 // Stop once the first chain of merge commits stops
@@ -109,6 +95,34 @@ class WarmRerereCacheCommand extends Command
                     break;
                 }
             }
+        }
+    }
+
+    /**
+     * @param string $mergeHash
+     * @param string $fromHash
+     * @param string $toHash
+     *
+     * @return void
+     */
+    private function trainRerere(string $mergeHash, string $fromHash, string $toHash): void
+    {
+        // Checkout the from commit.
+        $this->runShellCommand('git checkout --quiet %s^0', [$fromHash], 'Could not checkout merge origin.');
+
+        // (Re)merge the next commit.
+        $mergeResult = $this->runShellCommand(
+            'git -c merge.conflictStyle=diff3 merge -s recursive -X patience %s',
+            [$toHash],
+            'Could not merge next commit.'
+        );
+        if ($mergeResult === null) {
+
+            // Train rerere.
+            $this->runShellCommand('git rerere', [], 'Unable to store current rerere state');
+            $this->runShellCommand('git checkout --quiet %s -- .', [$mergeHash], 'Unable to check out merge resolution');
+            $this->runShellCommand('git rerere', [], 'Unable to store rerere resolution');
+            $this->runShellCommand('git reset --quiet --hard', [], 'Unable to reset branch state');
         }
     }
 }

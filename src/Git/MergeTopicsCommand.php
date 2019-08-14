@@ -21,8 +21,8 @@ class MergeTopicsCommand extends Command
      */
     protected function configure()
     {
-        $this->setDescription('Merge multiple topic branches onto an integration branch.')
-            ->addArgument('integration', InputArgument::REQUIRED, 'Integration branch to merge topic branches into (e.g. feature/ABC-123-integration)')
+        $this->setDescription('Merge multiple topic branches onto an existing branch.')
+            ->addArgument('target', InputArgument::REQUIRED, 'Existing branch as the merge target (e.g. feature/ABC-123-integration)')
             ->addArgument('topic', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'Topic branches to merge (e.g. feature/ABC-123-task-1)');
     }
 
@@ -31,5 +31,97 @@ class MergeTopicsCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        // Must be in a git repo.
+        if (!file_exists('.git')) {
+            throw new Exception('No .git directory found.');
+        }
+
+        // Fetch branches
+        $targetBranch = $input->getArgument('target');
+        $topicBranches = $input->getArgument('topic');
+
+        // Switch to the target branch
+        $this->runShellCommand(
+            'git checkout %s',
+            [$targetBranch],
+            sprintf('Could not checkout target branch "%s".', $targetBranch)
+        );
+        $output->writeln(sprintf('Checked out target branch "%s".', $targetBranch));
+
+        // Merge each topic branch
+        foreach ($topicBranches as $topicBranch) {
+            $this->mergeTopicBranch($targetBranch, $topicBranch, $output);
+        }
+    }
+
+    /**
+     * @throws Exception
+     *
+     * @param string $targetBranch
+     * @param string $topicBranch
+     * @param OutputInterface $output
+     *
+     * @return void
+     */
+    private function mergeTopicBranch(string $targetBranch, string $topicBranch, OutputInterface $output): void
+    {
+        // Run the merge
+        $this->runShellCommand(
+            'git -c merge.conflictStyle=diff3 merge -s recursive -X patience --rerere-autoupdate --no-ff %s',
+            [$topicBranch],
+            sprintf('Could not merge topic "%s" into target "%s".', $topicBranch, $targetBranch)
+        );
+
+        // See if any leftover changes
+        $stagedFiles = $this->runShellCommand(
+            'git diff --cached --name-only',
+            [],
+            'Could not determine staged changes.'
+        );
+        $unstagedFiles = $this->runShellCommand(
+            'git diff --name-only',
+            [],
+            'Could not determine unstaged changes.'
+        );
+
+        // No leftover changes? We are done!
+        if (count($stagedFiles) == 0 && count($unstagedFiles) == 0) {
+            $output->writeln(sprintf('Merged topic branch "%s" cleanly.', $topicBranch));
+
+        // Only staged changes (from rerere)?
+        } elseif (count($unstagedFiles) == 0) {
+
+            // Commit rerere's resolution.
+            $this->runShellCommand('git commit --no-edit', [], 'Could not commit rerere resolution.');
+            $output->writeln(sprintf('Merged topic branch "%s" with rerere resolution.', $topicBranch));
+
+        // Unstaged (i.e. unresolvable) changes?
+        } else {
+
+            // Output debug detail.
+            $outputVerbosity = $output->getVerbosity();
+            if ($outputVerbosity >= OutputInterface::VERBOSITY_VERBOSE) {
+                $output->writeln('Unstaged changes filelist:');
+                foreach ($unstagedFiles as $unstagedFile) {
+                    $output->writeln(sprintf(' - %s', $unstagedFile));
+                }
+
+                // Output diff?
+                if ($outputVerbosity >= OutputInterface::VERBOSITY_VERY_VERBOSE) {
+                    $output->writeln('Unstaged changes diff:');
+                    $diff = $this->runShellCommand('git diff -U5', [], 'Could not generate diff.');
+                    foreach ($diff as $diffLine) {
+                        $output->writeln($diffLine);
+                    }
+                }
+            }
+
+            // Tidy up.
+            $this->runShellCommand('git merge --abort', [], 'Could not abort merge.');
+
+            // Bail.
+            $errorMsg = sprintf('Could not merge topic branch "%s".', $topicBranch);
+            throw new Exception($errorMsg);
+        }
     }
 }

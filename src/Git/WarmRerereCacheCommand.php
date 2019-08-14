@@ -12,6 +12,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class WarmRerereCacheCommand extends Command
 {
+    use ShellCommandTrait;
+
     protected static $defaultName = 'git:warm-rerere-cache';
 
     /**
@@ -107,27 +109,6 @@ class WarmRerereCacheCommand extends Command
                     break;
                 }
             }
-        }
-    }
-
-    /**
-     * @throws Exception
-     *
-     * @param string $command Command with placeholders
-     * @param string[] $args Placeholders
-     * @param string $errorMsg Error message if command fails
-     *
-     * @return string[] Output of command
-     */
-    private function runShellCommand(string $command, array $args, string $errorMsg): array
-    {
-        $args = array_map('escapeshellarg', $args);
-        $command = sprintf($command, ...$args);
-        exec($command, $output, $result);
-        if ($result === 0) {
-            return $output;
-        } else {
-            throw new Exception($errorMsg);
         }
     }
 }

@@ -105,9 +105,6 @@ class MergeTopicsCommand extends Command
                 }
             }
 
-            // Tidy up.
-            $this->runShellCommand('git merge --abort', [], 'Could not abort merge.');
-
             // Bail.
             $errorMsg = sprintf('Could not merge topic branch "%s".', $topicBranch);
             throw new Exception($errorMsg);

@@ -113,14 +113,17 @@ class WarmRerereCacheCommand extends Command
         $this->runShellCommand('git checkout --quiet %s^0', [$fromHash], 'Could not checkout merge origin.');
 
         // (Re)merge the next commit.
-        $mergeResult = $this->runShellCommand(
-            'git -c merge.conflictStyle=diff3 merge -s recursive -X patience %s',
-            [$toHash],
-            'Could not merge next commit.'
-        );
-        if ($mergeResult === null) {
+        try {
+            $this->runShellCommand(
+                'git -c merge.conflictStyle=diff3 merge -s recursive -X patience %s',
+                [$toHash],
+                'Could not merge next commit.'
+            );
 
-            // Train rerere.
+        // If there are merge conflicts...
+        } catch (Exception $exception) {
+
+            // Use conflict resolution to train rerere.
             $this->runShellCommand('git rerere', [], 'Unable to store current rerere state');
             $this->runShellCommand('git checkout --quiet %s -- .', [$mergeHash], 'Unable to check out merge resolution');
             $this->runShellCommand('git rerere', [], 'Unable to store rerere resolution');

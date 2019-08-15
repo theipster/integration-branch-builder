@@ -54,60 +54,58 @@ class MergeTopicsCommand extends Command
      */
     private function mergeTopicBranch(string $topicBranch, OutputInterface $output): void
     {
-        // Run the merge
-        $this->runShellCommand(
-            'git -c merge.conflictStyle=diff3 merge -s recursive -X patience --rerere-autoupdate --no-ff %s',
-            [$topicBranch],
-            sprintf('Could not merge topic "%s".', $topicBranch)
-        );
+        try {
+            // Run the merge
+            $this->runShellCommand(
+                'git -c merge.conflictStyle=diff3 merge -s recursive -X patience --rerere-autoupdate --no-ff %s',
+                [$topicBranch],
+                sprintf('Could not merge topic "%s".', $topicBranch)
+            );
 
-        // See if any leftover changes
-        $stagedFiles = $this->runShellCommand(
-            'git diff --cached --name-only',
-            [],
-            'Could not determine staged changes.'
-        );
-        $unstagedFiles = $this->runShellCommand(
-            'git diff --name-only',
-            [],
-            'Could not determine unstaged changes.'
-        );
-
-        // No leftover changes? We are done!
-        if (count($stagedFiles) == 0 && count($unstagedFiles) == 0) {
+            // Done!
             $output->writeln(sprintf('Merged topic branch "%s" cleanly.', $topicBranch));
 
-        // Only staged changes (from rerere)?
-        } elseif (count($unstagedFiles) == 0) {
+        // Errors?
+        } catch (Exception $exception) {
 
-            // Commit rerere's resolution.
-            $this->runShellCommand('git commit --no-edit', [], 'Could not commit rerere resolution.');
-            $output->writeln(sprintf('Merged topic branch "%s" with rerere resolution.', $topicBranch));
+            // See if any leftover changes
+            $unstagedFiles = $this->runShellCommand(
+                'git diff --name-only',
+                [],
+                'Could not determine unstaged changes.'
+            );
 
-        // Unstaged (i.e. unresolvable) changes?
-        } else {
+            // Only staged changes (from rerere)?
+            if (count($unstagedFiles) == 0) {
 
-            // Output debug detail.
-            $outputVerbosity = $output->getVerbosity();
-            if ($outputVerbosity >= OutputInterface::VERBOSITY_VERBOSE) {
-                $output->writeln('Unstaged changes filelist:');
-                foreach ($unstagedFiles as $unstagedFile) {
-                    $output->writeln(sprintf(' - %s', $unstagedFile));
-                }
+                // Commit rerere's resolution.
+                $this->runShellCommand('git commit --no-edit', [], 'Could not commit rerere resolution.');
+                $output->writeln(sprintf('Merged topic branch "%s" with rerere resolution.', $topicBranch));
 
-                // Output diff?
-                if ($outputVerbosity >= OutputInterface::VERBOSITY_VERY_VERBOSE) {
-                    $output->writeln('Unstaged changes diff:');
-                    $diff = $this->runShellCommand('git diff -U5', [], 'Could not generate diff.');
-                    foreach ($diff as $diffLine) {
-                        $output->writeln($diffLine);
+            // Unstaged (i.e. unresolvable) changes?
+            } else {
+
+                // Output debug detail.
+                $outputVerbosity = $output->getVerbosity();
+                if ($outputVerbosity >= OutputInterface::VERBOSITY_VERBOSE) {
+                    $output->writeln('Unstaged changes filelist:');
+                    foreach ($unstagedFiles as $unstagedFile) {
+                        $output->writeln(sprintf(' - %s', $unstagedFile));
+                    }
+
+                    // Output diff?
+                    if ($outputVerbosity >= OutputInterface::VERBOSITY_VERY_VERBOSE) {
+                        $output->writeln('Unstaged changes diff:');
+                        $diff = $this->runShellCommand('git diff -U5', [], 'Could not generate diff.');
+                        foreach ($diff as $diffLine) {
+                            $output->writeln($diffLine);
+                        }
                     }
                 }
-            }
 
-            // Bail.
-            $errorMsg = sprintf('Could not merge topic branch "%s".', $topicBranch);
-            throw new Exception($errorMsg);
+                // Bail.
+                throw $exception;
+            }
         }
     }
 }

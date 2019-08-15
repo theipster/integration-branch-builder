@@ -38,14 +38,16 @@ class WarmRerereCacheCommand extends Command
         }
 
         // Clear existing Git rerere cache?
-        if ($input->getOption('clear-cache')) {
+        if (file_exists('.git/rr-cache') && $input->getOption('clear-cache')) {
             $this->runShellCommand('rm -rf .git/rr-cache', [], 'Could not clear git rerere cache.');
             $output->writeln('Cleared git rerere cache.');
         }
 
         // Enable Git rerere.
-        $this->runShellCommand('mkdir -p .git/rr-cache', [], 'Could not enable git rerere.');
-        $output->writeln('Initialized git rerere cache.');
+        if (!file_exists('.git/rr-cache')) {
+            $this->runShellCommand('mkdir -p .git/rr-cache', [], 'Could not enable git rerere.');
+            $output->writeln('Initialized git rerere cache.');
+        }
 
         // Fetch branches
         $fromBranch = $input->getArgument('from');

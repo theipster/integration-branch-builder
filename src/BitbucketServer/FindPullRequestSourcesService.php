@@ -12,18 +12,6 @@ use TheIpster\IntegrationBranchBuilder\Entities\Branch;
 class FindPullRequestSourcesService
 {
     /**
-     * @var string
-     */
-    private $apiDomain;
-
-    /**
-     * Either "Bearer {token}" / "Basic {token}", depending on Bitbucket setup.
-     *
-     * @var string
-     */
-    private $authHeaderValue;
-
-    /**
      * @var ClientInterface
      */
     private $client;
@@ -38,38 +26,36 @@ class FindPullRequestSourcesService
      *
      * @param ClientInterface $client
      * @param RequestFactoryInterface $requestFactory
-     * @param string $apiDomain
-     * @param string $authHeaderValue
      */
     public function __construct(
         ClientInterface $client,
-        RequestFactoryInterface $requestFactory,
-        string $apiDomain,
-        string $authHeaderValue
+        RequestFactoryInterface $requestFactory
     ) {
         $this->client = $client;
         $this->requestFactory = $requestFactory;
-        $this->apiDomain = $apiDomain;
-        $this->authHeaderValue = $authHeaderValue;
     }
 
     /**
+     * @param string $apiDomain Bitbucket Server API domain name
      * @param string $projectKey Bitbucket project key
      * @param string $repositorySlug Bitbucket repository slug
      * @param string $targetBranch Pull request target branch name (e.g. "feature/ABC-123-target")
+     * @param string $authHeaderValue Bitbucket Server HTTP Auth header value
      *
      * @return RequestInterface
      */
     private function createHttpRequest(
+        string $apiDomain,
         string $projectKey,
         string $repositorySlug,
-        string $targetBranch
+        string $targetBranch,
+        string $authHeaderValue
     ): RequestInterface {
 
         // Build URI
         $pullRequestsUri = sprintf(
             '%s/rest/api/1.0/projects/%s/repos/%s/pull-requests?state=OPEN&order=OLDEST&at=refs/heads/%s',
-            $this->apiDomain,
+            rtrim($apiDomain, '/'),
             $projectKey,
             $repositorySlug,
             $targetBranch
@@ -77,27 +63,33 @@ class FindPullRequestSourcesService
 
         // Create request
         return $this->requestFactory->createRequest('GET', $pullRequestsUri)
-            ->withHeader('Authorization', $this->authHeaderValue);
+            ->withHeader('Authorization', $authHeaderValue);
     }
 
     /**
+     * @param string $apiDomain Bitbucket Server API domain name
      * @param string $projectKey Bitbucket project key
      * @param string $repositorySlug Bitbucket repository slug
      * @param string $targetBranch Pull request target branch name (e.g. "feature/ABC-123-target")
+     * @param string $authHeaderValue Bitbucket Server HTTP Auth header value
      *
      * @return Branch[]
      */
     public function getBranchesForPullRequestTarget(
+        string $apiDomain,
         string $projectKey,
         string $repositorySlug,
-        string $targetBranch
+        string $targetBranch,
+        string $authHeaderValue
     ): array {
 
         // Create HTTP request
         $request = $this->createHttpRequest(
+            $apiDomain,
             $projectKey,
             $repositorySlug,
-            $targetBranch
+            $targetBranch,
+            $authHeaderValue
         );
 
         // Get HTTP response

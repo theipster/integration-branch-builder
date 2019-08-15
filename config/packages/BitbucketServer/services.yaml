@@ -2,10 +2,7 @@ services:
   _defaults:
     autowire: true
 
-  TheIpster\IntegrationBranchBuilder\BitbucketServer\FindPullRequestSourcesService:
-    arguments:
-      $apiDomain: '%bitbucketServer.apiDomain%'
-      $authHeaderValue: '%bitbucketServer.authHeaderValue%'
   TheIpster\IntegrationBranchBuilder\BitbucketServer\FindPullRequestSourcesCommand:
     tags:
       - console.command
+  TheIpster\IntegrationBranchBuilder\BitbucketServer\FindPullRequestSourcesService: ~

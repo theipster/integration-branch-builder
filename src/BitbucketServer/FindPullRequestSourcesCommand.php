@@ -33,9 +33,11 @@ class FindPullRequestSourcesCommand extends Command
     protected function configure()
     {
         $this->setDescription('Given a pull request target branch, find all source branches.')
-            ->addArgument('projectKey', InputArgument::REQUIRED, 'Which Bitbucket project?')
-            ->addArgument('repositorySlug', InputArgument::REQUIRED, 'Which Bitbucket repository?')
-            ->addArgument('targetBranch', InputArgument::REQUIRED, 'Which branch are the pull requests targeting?');
+            ->addArgument('api-domain', InputArgument::REQUIRED, 'Bitbucket Server API domain name')
+            ->addArgument('project-key', InputArgument::REQUIRED, 'Bitbucket project key')
+            ->addArgument('repository-slug', InputArgument::REQUIRED, 'Bitbucket repository slug')
+            ->addArgument('target-branch', InputArgument::REQUIRED, 'Branch that the pull requests must be targeting')
+            ->addArgument('api-auth-header', InputArgument::REQUIRED, 'Bitbucket Server API HTTP Auth header value, e.g. "Bearer {token}"');
     }
 
     /**
@@ -44,15 +46,19 @@ class FindPullRequestSourcesCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         // Parse inputs
-        $projectKey = $input->getArgument('projectKey');
-        $repositorySlug = $input->getArgument('repositorySlug');
-        $targetBranch = $input->getArgument('targetBranch');
+        $apiDomain = $input->getArgument('api-domain');
+        $projectKey = $input->getArgument('project-key');
+        $repositorySlug = $input->getArgument('repository-slug');
+        $targetBranch = $input->getArgument('target-branch');
+        $apiAuthHeader = $input->getArgument('api-auth-header');
 
         // Fetch pull requests
         $branches = $this->service->getBranchesForPullRequestTarget(
+            $apiDomain,
             $projectKey,
             $repositorySlug,
-            $targetBranch
+            $targetBranch,
+            $apiAuthHeader
         );
 
         // Output branch refs

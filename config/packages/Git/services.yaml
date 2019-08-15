@@ -2,6 +2,9 @@ services:
   _defaults:
     autowire: true
 
+  TheIpster\IntegrationBranchBuilder\Git\MergeTopicsCommand:
+    tags:
+      - console.command
   TheIpster\IntegrationBranchBuilder\Git\WarmRerereCacheCommand:
     tags:
       - console.command

@@ -2,11 +2,11 @@ services:
   _defaults:
     autowire: true
 
-  TheIpster\IntegrationBranchBuilder\BitbucketCloud\Finder:
+  TheIpster\IntegrationBranchBuilder\BitbucketCloud\FindPullRequestSourcesService:
     arguments:
       $authHeaderValue: '%bitbucketCloud.authHeaderValue%'
       $organizationName: '%bitbucketCloud.organizationName%'
       $projectName: '%bitbucketCloud.projectName%'
-  TheIpster\IntegrationBranchBuilder\BitbucketCloud\Command:
+  TheIpster\IntegrationBranchBuilder\BitbucketCloud\FindPullRequestSourcesCommand:
     tags:
       - console.command

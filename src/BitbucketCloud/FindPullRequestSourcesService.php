@@ -2,20 +2,15 @@
 
 declare(strict_types=1);
 
-namespace TheIpster\IntegrationBranchBuilder\BitbucketServer;
+namespace TheIpster\IntegrationBranchBuilder\BitbucketCloud;
 
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use TheIpster\IntegrationBranchBuilder\Entities\Branch;
 
-class Finder
+class FindPullRequestSourcesService
 {
-    /**
-     * @var string
-     */
-    private $apiDomain;
-
     /**
      * Either "Bearer {token}" / "Basic {token}", depending on Bitbucket setup.
      *
@@ -29,6 +24,16 @@ class Finder
     private $client;
 
     /**
+     * @var string
+     */
+    private $organizationName;
+
+    /**
+     * @var string
+     */
+    private $projectName;
+
+    /**
      * @var RequestFactoryInterface
      */
     private $requestFactory;
@@ -38,67 +43,55 @@ class Finder
      *
      * @param ClientInterface $client
      * @param RequestFactoryInterface $requestFactory
-     * @param string $apiDomain
+     * @param string $organizationName
+     * @param string $projectName
      * @param string $authHeaderValue
      */
     public function __construct(
         ClientInterface $client,
         RequestFactoryInterface $requestFactory,
-        string $apiDomain,
+        string $organizationName,
+        string $projectName,
         string $authHeaderValue
     ) {
         $this->client = $client;
         $this->requestFactory = $requestFactory;
-        $this->apiDomain = $apiDomain;
+        $this->organizationName = $organizationName;
+        $this->projectName = $projectName;
         $this->authHeaderValue = $authHeaderValue;
     }
 
     /**
-     * @param string $projectKey Bitbucket project key
-     * @param string $repositorySlug Bitbucket repository slug
-     * @param string $targetBranch Pull request target branch name (e.g. "feature/ABC-123-target")
+     * @param string $pullRequestTarget
      *
      * @return RequestInterface
      */
-    private function createHttpRequest(
-        string $projectKey,
-        string $repositorySlug,
-        string $targetBranch
-    ): RequestInterface {
-
-        // Build URI
+    private function createHttpRequest(string $pullRequestTarget): RequestInterface
+    {
         $pullRequestsUri = sprintf(
-            '%s/rest/api/1.0/projects/%s/repos/%s/pull-requests?state=OPEN&order=OLDEST&at=refs/heads/%s',
-            $this->apiDomain,
-            $projectKey,
-            $repositorySlug,
-            $targetBranch
+            'https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests?q=%s&fields=%s&pagelen=%u',
+            $this->organizationName,
+            $this->projectName,
+            sprintf(
+                'state="OPEN"+AND+destination.branch.name="%s"',
+                urlencode($pullRequestTarget)
+            ),
+            'values.source.branch.name',
+            50
         );
-
-        // Create request
         return $this->requestFactory->createRequest('GET', $pullRequestsUri)
             ->withHeader('Authorization', $this->authHeaderValue);
     }
 
     /**
-     * @param string $projectKey Bitbucket project key
-     * @param string $repositorySlug Bitbucket repository slug
-     * @param string $targetBranch Pull request target branch name (e.g. "feature/ABC-123-target")
+     * @param string $pullRequestTarget Target branch name
      *
      * @return Branch[]
      */
-    public function getBranchesForPullRequestTarget(
-        string $projectKey,
-        string $repositorySlug,
-        string $targetBranch
-    ): array {
-
+    public function getBranchesForPullRequestTarget(string $pullRequestTarget): array
+    {
         // Create HTTP request
-        $request = $this->createHttpRequest(
-            $projectKey,
-            $repositorySlug,
-            $targetBranch
-        );
+        $request = $this->createHttpRequest($pullRequestTarget);
 
         // Get HTTP response
         $response = $this->client->sendRequest($request);
@@ -130,7 +123,7 @@ class Finder
             function ($pullRequest) {
                 $branchName = sprintf(
                     'origin/%s',
-                    $pullRequest['fromRef']['displayId']
+                    $pullRequest['source']['branch']['name']
                 );
                 return new Branch($branchName);
             },

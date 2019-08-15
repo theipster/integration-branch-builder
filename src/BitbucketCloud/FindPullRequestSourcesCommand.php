@@ -33,8 +33,8 @@ class FindPullRequestSourcesCommand extends Command
     protected function configure()
     {
         $this->setDescription('Given a pull request target branch, find all source branches.')
-            ->addArgument('workspace', InputArgument::REQUIRED, 'Bitbucket workspace')
-            ->addArgument('repository-slug', InputArgument::REQUIRED, 'Bitbucket repository slug')
+            ->addArgument('workspace', InputArgument::REQUIRED, 'Bitbucket workspace, e.g. "acme"')
+            ->addArgument('repository-slug', InputArgument::REQUIRED, 'Bitbucket repository slug, e.g. "my-repo"')
             ->addArgument('target-branch', InputArgument::REQUIRED, 'Branch that the pull requests must be targeting')
             ->addArgument('api-auth-header', InputArgument::REQUIRED, 'Bitbucket Cloud API HTTP Auth header value, e.g. "Basic {token}"');
     }

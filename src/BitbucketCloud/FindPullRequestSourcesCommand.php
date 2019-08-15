@@ -33,7 +33,10 @@ class FindPullRequestSourcesCommand extends Command
     protected function configure()
     {
         $this->setDescription('Given a pull request target branch, find all source branches.')
-            ->addArgument('targetBranch', InputArgument::REQUIRED, 'Which branch are the pull requests targeting?');
+            ->addArgument('workspace', InputArgument::REQUIRED, 'Bitbucket workspace, e.g. "acme"')
+            ->addArgument('repository-slug', InputArgument::REQUIRED, 'Bitbucket repository slug, e.g. "my-repo"')
+            ->addArgument('target-branch', InputArgument::REQUIRED, 'Branch that the pull requests must be targeting')
+            ->addArgument('api-auth-header', InputArgument::REQUIRED, 'Bitbucket Cloud API HTTP Auth header value, e.g. "Basic {token}"');
     }
 
     /**
@@ -41,9 +44,19 @@ class FindPullRequestSourcesCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        // Get inputs
+        $workspace = $input->getArgument('workspace');
+        $repositorySlug = $input->getArgument('repository-slug');
+        $targetBranch = $input->getArgument('target-branch');
+        $authHeaderValue = $input->getArgument('api-auth-header');
+
         // Fetch branches
-        $targetBranch = $input->getArgument('targetBranch');
-        $branches = $this->service->getBranchesForPullRequestTarget($targetBranch);
+        $branches = $this->service->getBranchesForPullRequestTarget(
+            $workspace,
+            $repositorySlug,
+            $targetBranch,
+            $authHeaderValue
+        );
 
         // Output branch refs
         foreach ($branches as $branch) {

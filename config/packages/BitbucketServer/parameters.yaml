@@ -1,3 +1,0 @@
-parameters:
-  bitbucketServer.apiDomain: 'https://my-bitbucket-server-domain'
-  bitbucketServer.authHeaderValue: '------'

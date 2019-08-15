@@ -33,9 +33,9 @@ class FindPullRequestSourcesCommand extends Command
     protected function configure()
     {
         $this->setDescription('Given a pull request target branch, find all source branches.')
-            ->addArgument('api-domain', InputArgument::REQUIRED, 'Bitbucket Server API domain name')
-            ->addArgument('project-key', InputArgument::REQUIRED, 'Bitbucket project key')
-            ->addArgument('repository-slug', InputArgument::REQUIRED, 'Bitbucket repository slug')
+            ->addArgument('api-domain', InputArgument::REQUIRED, 'Bitbucket Server API domain name, e.g "https://my-bitbucket-instance/"')
+            ->addArgument('project-key', InputArgument::REQUIRED, 'Bitbucket project key, e.g "PROJ"')
+            ->addArgument('repository-slug', InputArgument::REQUIRED, 'Bitbucket repository slug, e.g. "my-repo"')
             ->addArgument('target-branch', InputArgument::REQUIRED, 'Branch that the pull requests must be targeting')
             ->addArgument('api-auth-header', InputArgument::REQUIRED, 'Bitbucket Server API HTTP Auth header value, e.g. "Bearer {token}"');
     }

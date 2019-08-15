@@ -12,26 +12,9 @@ use TheIpster\IntegrationBranchBuilder\Entities\Branch;
 class FindPullRequestSourcesService
 {
     /**
-     * Either "Bearer {token}" / "Basic {token}", depending on Bitbucket setup.
-     *
-     * @var string
-     */
-    private $authHeaderValue;
-
-    /**
      * @var ClientInterface
      */
     private $client;
-
-    /**
-     * @var string
-     */
-    private $organizationName;
-
-    /**
-     * @var string
-     */
-    private $projectName;
 
     /**
      * @var RequestFactoryInterface
@@ -43,55 +26,70 @@ class FindPullRequestSourcesService
      *
      * @param ClientInterface $client
      * @param RequestFactoryInterface $requestFactory
-     * @param string $organizationName
-     * @param string $projectName
-     * @param string $authHeaderValue
      */
     public function __construct(
         ClientInterface $client,
-        RequestFactoryInterface $requestFactory,
-        string $organizationName,
-        string $projectName,
-        string $authHeaderValue
+        RequestFactoryInterface $requestFactory
     ) {
         $this->client = $client;
         $this->requestFactory = $requestFactory;
-        $this->organizationName = $organizationName;
-        $this->projectName = $projectName;
-        $this->authHeaderValue = $authHeaderValue;
     }
 
     /**
-     * @param string $pullRequestTarget
+     * @param string $workspace
+     * @param string $repositorySlug
+     * @param string $targetBranch
+     * @param string $authHeaderValue
      *
      * @return RequestInterface
      */
-    private function createHttpRequest(string $pullRequestTarget): RequestInterface
-    {
+    private function createHttpRequest(
+        string $workspace,
+        string $repositorySlug,
+        string $targetBranch,
+        string $authHeaderValue
+    ): RequestInterface {
+
+        // Build URI
         $pullRequestsUri = sprintf(
             'https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests?q=%s&fields=%s&pagelen=%u',
-            $this->organizationName,
-            $this->projectName,
+            $workspace,
+            $repositorySlug,
             sprintf(
                 'state="OPEN"+AND+destination.branch.name="%s"',
-                urlencode($pullRequestTarget)
+                urlencode($targetBranch)
             ),
             'values.source.branch.name',
             50
         );
+
+        // Create request
         return $this->requestFactory->createRequest('GET', $pullRequestsUri)
-            ->withHeader('Authorization', $this->authHeaderValue);
+            ->withHeader('Authorization', $authHeaderValue);
     }
 
     /**
-     * @param string $pullRequestTarget Target branch name
+     * @param string $workspace Bitbucket workspace
+     * @param string $repositorySlug Bitbucket repository slug
+     * @param string $targetBranch Target branch name
+     * @param string $authHeaderValue Bitbucket Cloud API HTTP Auth value
      *
      * @return Branch[]
      */
-    public function getBranchesForPullRequestTarget(string $pullRequestTarget): array
-    {
+    public function getBranchesForPullRequestTarget(
+        string $workspace,
+        string $repositorySlug,
+        string $targetBranch,
+        string $authHeaderValue
+    ): array {
+
         // Create HTTP request
-        $request = $this->createHttpRequest($pullRequestTarget);
+        $request = $this->createHttpRequest(
+            $workspace,
+            $repositorySlug,
+            $targetBranch,
+            $authHeaderValue
+        );
 
         // Get HTTP response
         $response = $this->client->sendRequest($request);

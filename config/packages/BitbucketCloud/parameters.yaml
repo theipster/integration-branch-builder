@@ -1,4 +1,0 @@
-parameters:
-  bitbucketCloud.authHeaderValue: '------'
-  bitbucketCloud.organizationName: 'acme'
-  bitbucketCloud.projectName: 'my-project'

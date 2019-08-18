@@ -33,9 +33,7 @@ class FindPullRequestSourcesCommand extends Command
     protected function configure()
     {
         $this->setDescription('Given a pull request target branch, find all source branches.')
-            ->addArgument('api-domain', InputArgument::REQUIRED, 'Bitbucket Server API domain name, e.g "https://my-bitbucket-instance/"')
-            ->addArgument('project-key', InputArgument::REQUIRED, 'Bitbucket project key, e.g "PROJ"')
-            ->addArgument('repository-slug', InputArgument::REQUIRED, 'Bitbucket repository slug, e.g. "my-repo"')
+            ->addArgument('repository-url', InputArgument::REQUIRED, 'Bitbucket repository URL, e.g. "ssh://user@my-bitbucket-instance/project/repo.git"')
             ->addArgument('target-branch', InputArgument::REQUIRED, 'Branch that the pull requests must be targeting')
             ->addArgument('api-auth-header', InputArgument::REQUIRED, 'Bitbucket Server API HTTP Auth header value, e.g. "Bearer {token}"');
     }
@@ -46,17 +44,13 @@ class FindPullRequestSourcesCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         // Parse inputs
-        $apiDomain = $input->getArgument('api-domain');
-        $projectKey = $input->getArgument('project-key');
-        $repositorySlug = $input->getArgument('repository-slug');
+        $repositoryUrl = $input->getArgument('repository-url');
         $targetBranch = $input->getArgument('target-branch');
         $apiAuthHeader = $input->getArgument('api-auth-header');
 
         // Fetch pull requests
         $branches = $this->service->getBranchesForPullRequestTarget(
-            $apiDomain,
-            $projectKey,
-            $repositorySlug,
+            $repositoryUrl,
             $targetBranch,
             $apiAuthHeader
         );

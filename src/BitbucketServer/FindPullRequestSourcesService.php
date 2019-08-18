@@ -54,8 +54,8 @@ class FindPullRequestSourcesService
 
         // Build URI
         $pullRequestsUri = sprintf(
-            '%s/rest/api/1.0/projects/%s/repos/%s/pull-requests?state=OPEN&order=OLDEST&at=refs/heads/%s',
-            rtrim($apiDomain, '/'),
+            'https://%s/rest/api/1.0/projects/%s/repos/%s/pull-requests?state=OPEN&order=OLDEST&at=refs/heads/%s',
+            $apiDomain,
             $projectKey,
             $repositorySlug,
             $targetBranch
@@ -67,27 +67,42 @@ class FindPullRequestSourcesService
     }
 
     /**
-     * @param string $apiDomain Bitbucket Server API domain name
-     * @param string $projectKey Bitbucket project key
-     * @param string $repositorySlug Bitbucket repository slug
+     * @param string $repositoryUrl Bitbucket repository URL.
      * @param string $targetBranch Pull request target branch name (e.g. "feature/ABC-123-target")
      * @param string $authHeaderValue Bitbucket Server HTTP Auth header value
      *
      * @return Branch[]
      */
     public function getBranchesForPullRequestTarget(
-        string $apiDomain,
-        string $projectKey,
-        string $repositorySlug,
+        string $repositoryUrl,
         string $targetBranch,
         string $authHeaderValue
     ): array {
 
+        // Parse repo URL
+        $urlComponents = parse_url($repositoryUrl);
+        if ($urlComponents === false
+            || empty($urlComponents['host'])
+            || empty($urlComponents['path'])
+        ) {
+            $errorMsg = sprintf('Could not parse repository URL: %s.', $repositoryUrl);
+            throw new Exception($errorMsg);
+        }
+        $pathMatched = preg_match(
+            '#^/(?P<projectKey>[a-z]+)/(?P<repoSlug>[a-z-]+)\.git$#',
+            $urlComponents['path'],
+            $pathMatches
+        );
+        if (!$pathMatched) {
+            $errorMsg = sprintf('Could not parse repository URL (path): %s.', $repositoryUrl);
+            throw new Exception($errorMsg);
+        }
+
         // Create HTTP request
         $request = $this->createHttpRequest(
-            $apiDomain,
-            $projectKey,
-            $repositorySlug,
+            $urlComponents['host'],
+            $pathMatches['projectKey'],
+            $pathMatches['repoSlug'],
             $targetBranch,
             $authHeaderValue
         );
